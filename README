@@ -1,0 +1,96 @@
+
+This is my attempt at Snake in javascript, meant mainly to use javascript in a "meaningful" way.
+
+This README alsocontains all my design notes, 
+
+
+snake design:
+
+Initialise variables
+
+At every tick:
+  update input vector
+  try to move:
+  	if touches snake then 
+  		gameover
+  	if touches nugget then
+  		eat nugget
+  		add new nugget
+  		add 1 length to snake
+  	else 
+  		move snake accordingly 
+  
+
+
+
+Representation of snake:
+	list of points
+	functions:
+		move 
+		set direction
+		lengthen
+		existence at point
+
+Representation of world:
+	snake
+	tick function
+	nugget position
+
+
+
+
+html inclusion:
+
+just making it a div? <div class="snake"> ... ?
+I'm fine with this.
+
+
+
+snake representation details
+
+
+the pointlist that holds the "parts" of the snake...... hiow do they work?
+
+If I have three parts, for example, in order
+ 
+ 0--1--2
+
+ when I move I could just move 0: 
+    
+    1--2--0
+
+in which case 1 would be the new last.
+
+
+so point list works like a circular buffer: there's a "current tail", as well as a "current head". We increment each every time. 
+
+This might seem like enough, but there's a slight problem.... adding requires a lot of shifting.
+
+So I'll use a linked list. (or rather, just a cobbled together node list. I can't write linked list functionality correctly otherwise!)
+
+The design remains similar.
+
+When adding a thing, we'll just duplicate the tail....
+
+before add:
+
+0--1--2
+
+hd: 2 -> 0
+tl: 0 -> 1
+
+adding an el't:
+
+0/3--1--2
+
+hd: 2->3 
+
+tl: 3->0
+
+
+after "step":
+
+ 0--1--2--3
+
+
+ BAM!
