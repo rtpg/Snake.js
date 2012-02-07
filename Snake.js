@@ -5,6 +5,8 @@
   */
 
 
+l=function(text){/*console.log(text)*/};
+
 /**
  Gfx
  
@@ -89,23 +91,24 @@ var Snake=function(){
 
      //this is a bad initialisation example....
      this.ptList=new Node({x:5,y:5},null);
-     this.ptList.append({x:6,y:5});
+     l("before append");console.log(this.ptList);
      this.ptList.append({x:7,y:5});
-
+     this.ptList.append({x:6,y:5});
+     l("before circular");l(this.ptList.next.next);
      this.ptList.makeCircular();
 
      this.head=this.ptList.next.next;
 
      this.tl=this.ptList;
      /*
-      direction: 1= left
-                 2= up;
-                 4= right;
-                 8= down;
-                */
+          direction: 1= left
+                     2= up;
+                     4= right;
+                     8= down;
+                    */
                 
      this.direction=4;
-
+     l("this.head");l(this.head);
 }
 //prototype definition block
 
@@ -128,7 +131,7 @@ Snake.prototype.lengthen=function(){
  */
 Snake.prototype.tick=function(){
     var newPos;
-    var hd=this.head;
+    var hd=this.head.val;
     switch(this.direction){
         case 1://left
             newPos={x:hd.x-1,y:hd.y};
@@ -149,6 +152,7 @@ Snake.prototype.tick=function(){
     //here I "move the tail". 
 
     //THE README. READ IT
+    l("in Snake.tick");
 
     this.tl.val=newPos;
 
@@ -158,8 +162,12 @@ Snake.prototype.tick=function(){
      (see pseudo-drawing in the README for an idea of how this works...)
      **/
      //this.head.next=tl;//this is always true... so no need to do it ourselves
+     l("moving el'ts");
+     l("prev head: "); l(this.head);l(", prev tail:");l(this.tl);
      this.head=this.tl;
-     this.tl=tl.next;
+     this.tl=this.tl.next;
+
+     l("new head: "); l(this.head);l(", new tail:");l(this.tl);
      //CRAAAAZY! basically the structure works by itself.
 }
 
@@ -184,9 +192,13 @@ Snake.prototype.atPoint=function(coord){
 
 Snake.prototype.draw=function(GfxObj,sz){
     var curNode=this.tl;
+    var i=0;
     do{
-        GfxObj.drawRect(curNode.val.x*sz,curNode.val.y*sz,sz);
+        l("drawing node "+i);
+        l("node "+i+" : ("+curNode.val.x+","+curNode.val.y+")");
+        GfxObj.drawSquare(curNode.val.x*sz,curNode.val.y*sz,sz);
         curNode=curNode.next;
+        i++;
     }while(curNode!==this.tl);
 
 }
@@ -203,11 +215,13 @@ var randomInt=function(n){
 var World=function(dimensions){
     this.nugget={x:Math.random(dimensions.x),y:Math.random(dimensions.y)};
     this.s=new Snake();
-    this.dim=dimensions;
+    this.dim={x:dimensions.x,y:dimensions.y};
     this.score=0;
 }
 
 World.prototype.inputUpdate=function(evt){
+    l("in inputUpdate");
+    l("evt: "+evt);
     //left=37
     //up=38
     //right=39
@@ -233,7 +247,7 @@ World.prototype.inputUpdate=function(evt){
 }
 
 World.prototype.generateNugget=function(){
-    var hd=this.s.head;
+    var hd=this.s.head.val;
     this.nugget=hd;
     while(this.nugget.x==hd.x || this.nugget.y==hd.y || this.s.atPoint(this.nugget)){
         this.nugget={x:Math.random(dimensions.x),y:Math.random(dimensions.y)};
@@ -241,10 +255,9 @@ World.prototype.generateNugget=function(){
 }
 
 World.prototype.tick=function(){
-    this.inputUpdate();
     this.s.tick();
 
-    var hd=s.head;
+    var hd=this.s.head.val;
     if(hd.x<0 ||
     hd.x>=this.dim.x ||
     hd.y<0 ||
@@ -253,7 +266,7 @@ World.prototype.tick=function(){
         //game over, man!
     }
 
-    if(hd.x==this.nugget.s.x && hd.y==this.nugget.s.y){
+    if(hd.x==this.nugget.x && hd.y==this.nugget.y){
         //got nugget
         this.score++;
         this.generateNugget();
@@ -268,25 +281,25 @@ World.prototype.tick=function(){
 World.prototype.draw=function(GfxObj,sz){
     //draw a box around the gameworld
     GfxObj.drawRect(0,0,this.dim.x,this.dim.y,false);
-    GfxObj.drawText(this.nugget.val.x*sz,this.nugget.val.y*sz,sz,'+');
-    this.snake.draw(GfxObj,sz);
+    GfxObj.drawCircle(this.nugget.x*sz,this.nugget.y*sz,sz);
+    this.s.draw(GfxObj,sz);
 }
 /**
  to be called when the game wants to be started
  */
 World.prototype.init=function(id,sz){
-    if(selector===undefined){
-        selector="canvas.snake";
-    }
-    $(selector).keydown(inputUpdate);
     var obj=document.getElementById(id);
-    obj.onkeydown=this.inputUpdate;
     var ctx=obj.getContext("2d");
     var gfx=new Gfx(ctx);
 
+    var that=this;
+
+    //wrapper for this
+    document.onkeydown=function(evt){ that.inputUpdate(evt);};
     this.loopFunction=function(){
-        this.draw(gfx,sz);
-        this.tick();   
+        l("in loop function");
+        that.draw(gfx,sz);
+        that.tick();   
     }
     setTimeout(this.loopFunction,500);
 }
