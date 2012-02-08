@@ -10,9 +10,11 @@
 	This browser doesn't seem to like Canvas
 	</canvas>
 
+	<p id="score">Score:0</p>
 	<script type="text/javascript">
-	world=new World({x:600,y:600});
-	world.init("game",5);
+	world=new World({x:600,y:600},20);
+	world.setTextOut("score");
+	world.init("game",20);
 	</script>
 </body>
 </html>

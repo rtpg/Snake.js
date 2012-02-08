@@ -1,11 +1,11 @@
 /**Snake.js
   it's Snake... in javascript
   
-  uses jQuery, html5 canvas
+  uses html5 canvas
   */
 
 
-l=function(text){/*console.log(text)*/};
+l=function(text){ console.log(text); };
 
 /**
  Gfx
@@ -37,7 +37,10 @@ var Gfx=function(ctx){
     this.drawCircle=function(x,y,sz,text){
         this.ctx.beginPath();
         this.ctx.arc(x,y,sz,0,Math.PI*2,true);    
-        this.ctx.stroke();
+        this.ctx.fill();
+    }
+    this.clear=function(x,y,w,h){
+      this.ctx.clearRect(x,y,w,h);
     }
 
 }
@@ -91,10 +94,8 @@ var Snake=function(){
 
      //this is a bad initialisation example....
      this.ptList=new Node({x:5,y:5},null);
-     l("before append");console.log(this.ptList);
      this.ptList.append({x:7,y:5});
      this.ptList.append({x:6,y:5});
-     l("before circular");l(this.ptList.next.next);
      this.ptList.makeCircular();
 
      this.head=this.ptList.next.next;
@@ -108,7 +109,6 @@ var Snake=function(){
                     */
                 
      this.direction=4;
-     l("this.head");l(this.head);
 }
 //prototype definition block
 
@@ -152,7 +152,6 @@ Snake.prototype.tick=function(){
     //here I "move the tail". 
 
     //THE README. READ IT
-    l("in Snake.tick");
 
     this.tl.val=newPos;
 
@@ -162,12 +161,9 @@ Snake.prototype.tick=function(){
      (see pseudo-drawing in the README for an idea of how this works...)
      **/
      //this.head.next=tl;//this is always true... so no need to do it ourselves
-     l("moving el'ts");
-     l("prev head: "); l(this.head);l(", prev tail:");l(this.tl);
+
      this.head=this.tl;
      this.tl=this.tl.next;
-
-     l("new head: "); l(this.head);l(", new tail:");l(this.tl);
      //CRAAAAZY! basically the structure works by itself.
 }
 
@@ -194,8 +190,6 @@ Snake.prototype.draw=function(GfxObj,sz){
     var curNode=this.tl;
     var i=0;
     do{
-        l("drawing node "+i);
-        l("node "+i+" : ("+curNode.val.x+","+curNode.val.y+")");
         GfxObj.drawSquare(curNode.val.x*sz,curNode.val.y*sz,sz);
         curNode=curNode.next;
         i++;
@@ -212,16 +206,15 @@ var randomInt=function(n){
     return Math.floor(Math.random()*n);
 }
 
-var World=function(dimensions){
-    this.nugget={x:Math.random(dimensions.x),y:Math.random(dimensions.y)};
+var World=function(dimensions,sz){
+    this.dim= {x:dimensions.x/sz,y:dimensions.y/sz};
     this.s=new Snake();
-    this.dim={x:dimensions.x,y:dimensions.y};
     this.score=0;
+    this.generateNugget();
+
 }
 
 World.prototype.inputUpdate=function(evt){
-    l("in inputUpdate");
-    l("evt: "+evt);
     //left=37
     //up=38
     //right=39
@@ -229,16 +222,16 @@ World.prototype.inputUpdate=function(evt){
     var x;
     switch(evt.keyCode){
         case 37:
-            x=1;
+            x=(this.s.direction==4?4:1);//if going right can't go left
             break;
         case 38:
-            x=2;
+            x=(this.s.direction==8?8:2);
             break;
         case 39:
-            x=4;
+            x=(this.s.direction==1?1:4);
             break;
         case 40:
-            x=8;
+            x=(this.s.direction==2?2:8);
             break;
         default:
             x=this.s.direction;
@@ -250,7 +243,7 @@ World.prototype.generateNugget=function(){
     var hd=this.s.head.val;
     this.nugget=hd;
     while(this.nugget.x==hd.x || this.nugget.y==hd.y || this.s.atPoint(this.nugget)){
-        this.nugget={x:Math.random(dimensions.x),y:Math.random(dimensions.y)};
+        this.nugget={x:randomInt(this.dim.x),y:randomInt(this.dim.y)};
     }
 }
 
@@ -264,24 +257,26 @@ World.prototype.tick=function(){
     hd.y>=this.dim.y ||
     this.s.atPoint(hd)){
         //game over, man!
+
     }
 
     if(hd.x==this.nugget.x && hd.y==this.nugget.y){
         //got nugget
         this.score++;
+        this.s.lengthen();
         this.generateNugget();
     }
 
     //can't forget to set the timeout again
 
-    setTimeout(this.loopFunction,500);
+    setTimeout(this.loopFunction,50);
 
 }
 
 World.prototype.draw=function(GfxObj,sz){
     //draw a box around the gameworld
-    GfxObj.drawRect(0,0,this.dim.x,this.dim.y,false);
-    GfxObj.drawCircle(this.nugget.x*sz,this.nugget.y*sz,sz);
+    GfxObj.drawRect(0,0,this.dim.x*sz,this.dim.y*sz,false);
+    GfxObj.drawCircle(this.nugget.x*sz+sz/2,this.nugget.y*sz+sz/2,sz/2);
     this.s.draw(GfxObj,sz);
 }
 /**
@@ -297,9 +292,14 @@ World.prototype.init=function(id,sz){
     //wrapper for this
     document.onkeydown=function(evt){ that.inputUpdate(evt);};
     this.loopFunction=function(){
-        l("in loop function");
+        gfx.clear(0,0,obj.width,obj.height);
         that.draw(gfx,sz);
         that.tick();   
+        that.Textobj.innerHTML="Score: "+that.score;
     }
-    setTimeout(this.loopFunction,500);
+    setTimeout(this.loopFunction,100);
+}
+
+World.prototype.setTextOut=function(id){
+  this.Textobj=document.getElementById(id);
 }
